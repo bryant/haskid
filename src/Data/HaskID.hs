@@ -7,6 +7,26 @@ import Numeric (showIntAtBase)
 alp :: String
 alp = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
+encode input salt alpha separators guards min_length
+    | long_enough raw = raw
+    | long_enough $ graw = graw
+    | long_enough $ grawg = grawg
+    | otherwise = shuffle_pad alpha grawg min_length
+    where
+    raw = encode_raw input salt alpha separators
+    graw = guard_choice (head raw) : raw
+    grawg = graw ++ [guard_choice (raw !! 1)]
+    long_enough = (>= min_length) . length
+    guard_choice n = guards !!% (sum (zipWith rem input [100..]) + ord n)
+
+shuffle_pad alpha xs min_length
+    | length xs >= min_length = take min_length $ drop exlen2 xs
+    | otherwise = shuffle_pad alpha' xs' min_length
+    where
+    alpha' = shuffle alpha alpha
+    xs' = take d alpha' ++ xs ++ drop d alpha' where d = length alpha `quot` 2
+    exlen2 = (length xs - min_length) `quot` 2
+
 encode_raw :: [Int] -> String -> String -> String -> String
 encode_raw input salt alpha separators = encoded' `interleave_with` seps
     where
