@@ -7,6 +7,24 @@ import Numeric (showIntAtBase)
 alp :: String
 alp = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
+data Settings
+    = Settings
+    { alphabet :: String
+    , separators :: String
+    , min_hash_length :: Int
+    , salt :: String
+    }
+    deriving Show
+
+default_settings :: Settings
+default_settings = Settings
+    { alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\
+                 \1234567890"
+    , separators = "cfhistuCFHISTU"
+    , min_hash_length = 0
+    , salt = ""
+    }
+
 encode input salt alpha separators guards min_length
     | long_enough raw = raw
     | long_enough $ graw = graw
