@@ -13,6 +13,7 @@ data Settings
     , separators :: String
     , min_hash_length :: Int
     , salt :: String
+    , guards :: String
     }
     deriving Show
 
@@ -20,9 +21,10 @@ default_settings :: Settings
 default_settings = Settings
     { alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\
                  \1234567890"
-    , separators = "cfhistuCFHISTU"
+    , separators = "cfhistu"
     , min_hash_length = 0
     , salt = ""
+    , guards = "CFHISTU"
     }
 
 encode input salt alpha separators guards min_length
