@@ -81,6 +81,7 @@ shuffle :: String -> String -> String
 shuffle xs = foldl' swap xs . mk_swap_points (length xs)
 
 mk_swap_points :: Int -> String -> [(Int, Int)]
+mk_swap_points start [] = []
 mk_swap_points start salt =
     zipWith3 compute sumsalt [start - 1, start - 2..1] salts
     where
