@@ -37,7 +37,8 @@ default_settings = Config
     len_guards = length alpha'' `ceildiv` guard_ratio
     ceildiv i j = flip quot j $ i + j - 1
 
-encode input salt alpha separators guards min_length
+encode :: Config -> [Int] -> String
+encode (Config alpha separators min_length salt guards) input
     | long_enough raw = raw
     | long_enough $ graw = graw
     | long_enough $ grawg = grawg
