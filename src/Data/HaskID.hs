@@ -1,8 +1,9 @@
 module Data.HaskID where
 
 import Data.Char (ord)
-import Data.List (foldl', zipWith4, mapAccumL, (\\))
-import Numeric (showIntAtBase)
+import Data.List (foldl', zipWith4, mapAccumL, (\\), elemIndex)
+import Data.Maybe (fromJust)
+import Numeric (showIntAtBase, readInt)
 
 alp :: String
 alp = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
@@ -49,6 +50,23 @@ encode (Config alpha separators min_length salt guards) input
     grawg = graw ++ [guard_choice (raw !! 1)]
     long_enough = (>= min_length) . length
     guard_choice n = guards !!% (sum (zipWith rem input [100..]) + ord n)
+
+decode :: Config -> String -> [Int]
+decode (Config alpha separators min_length salt guards) encoded =
+    case str_split (`elem` guards) encoded of
+        [_, seed : it, _] -> decode' it $ seed : salt
+        [_, seed : it] -> decode' it $ seed : salt
+        [seed : it] -> decode' it $ seed : salt
+        _ -> []
+    where decode' it s = map_accum (dec_step s) alpha $ str_split (`elem` separators) it
+
+dec_step :: String -> String -> String -> (String, Int)
+dec_step salt alpha radixed = (alpha', int)
+    where
+    alpha_salt = take (length alpha) (salt ++ alpha)
+    alpha' = shuffle alpha alpha_salt
+    int = fst . head $ readInt (length alpha') (`elem` alpha') index_in radixed
+    index_in = fromJust . (`elemIndex` alpha')
 
 shuffle_pad alpha xs min_length
     | length xs >= min_length = take min_length $ drop exlen2 xs
@@ -108,3 +126,9 @@ map_accum f accum = snd . mapAccumL f accum
 interleave_with :: [[a]] -> [a] -> [a]
 interleave_with chunks seps = concat (zipWith (++) chunks seps')
     where seps' = map (: []) seps
+
+str_split :: Eq a => (a -> Bool) -> [a] -> [[a]]
+str_split f = filter (/= []) . foldr f' [[]]
+    where f' c accum
+            | f c = [] : accum
+            | otherwise = (c : head accum) : tail accum
