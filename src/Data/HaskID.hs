@@ -1,14 +1,14 @@
 module Data.HaskID where
 
 import Data.Char (ord)
-import Data.List (foldl', zipWith4, mapAccumL)
+import Data.List (foldl', zipWith4, mapAccumL, (\\))
 import Numeric (showIntAtBase)
 
 alp :: String
 alp = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
-data Settings
-    = Settings
+data Config
+    = Config
     { alphabet :: String
     , separators :: String
     , min_hash_length :: Int
@@ -17,15 +17,25 @@ data Settings
     }
     deriving Show
 
-default_settings :: Settings
-default_settings = Settings
-    { alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\
-                 \1234567890"
-    , separators = "cfhistu"
+min_alphabet_length = 16
+separator_ratio = 3.5
+guard_ratio = 12
+
+default_settings :: Config
+default_settings = Config
+    { alphabet = drop len_guards alpha''
+    , separators = sep'
     , min_hash_length = 0
-    , salt = ""
-    , guards = "CFHISTU"
+    , salt = salt'
+    , guards = take len_guards alpha''
     }
+    where
+    salt' = ""
+    alpha' = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+    sep' = shuffle "cfhistuCFHISTU" salt'
+    alpha'' = shuffle (alpha' \\ sep') salt'
+    len_guards = length alpha'' `ceildiv` guard_ratio
+    ceildiv i j = flip quot j $ i + j - 1
 
 encode input salt alpha separators guards min_length
     | long_enough raw = raw
