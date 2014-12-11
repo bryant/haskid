@@ -40,8 +40,8 @@ default_settings = Config
 encode :: Config -> [Int] -> String
 encode (Config alpha separators min_length salt guards) input
     | long_enough raw = raw
-    | long_enough $ graw = graw
-    | long_enough $ grawg = grawg
+    | long_enough graw = graw
+    | long_enough grawg = grawg
     | otherwise = shuffle_pad alpha grawg min_length
     where
     raw = encode_raw input salt alpha separators
