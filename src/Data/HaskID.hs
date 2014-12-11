@@ -59,10 +59,10 @@ shuffle_pad alpha xs min_length
     exlen2 = (length xs - min_length) `quot` 2
 
 encode_raw :: [Int] -> String -> String -> String -> String
-encode_raw input salt alpha separators = encoded' `interleave_with` seps
+encode_raw input salt alpha separators = init $ seed : interleave_with encoded' seps
     where
     seps = mk_seps separators input encoded'
-    encoded' = [seed] : map_accum (enc_step seedsalt) alpha input
+    encoded' = map_accum (enc_step seedsalt) alpha input
     seedsalt = seed : salt
     seed = alpha !!% sum (zipWith rem input [100..])
 
@@ -106,6 +106,5 @@ map_accum :: (a -> b -> (a, c)) -> a -> [b] -> [c]
 map_accum f accum = snd . mapAccumL f accum
 
 interleave_with :: [[a]] -> [a] -> [a]
-interleave_with [] _ = []
-interleave_with chunks seps = c ++ concat (zipWith (:) seps hunks)
-    where (c, hunks) = (head chunks, tail chunks)
+interleave_with chunks seps = concat (zipWith (++) chunks seps')
+    where seps' = map (: []) seps
