@@ -1,3 +1,6 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
+
 module Data.HaskID where
 
 import Data.Char (ord)
@@ -8,7 +11,9 @@ import Numeric (showIntAtBase, readInt)
 alp :: String
 alp = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
-data Config
+data CfgTag = ValidConfig | InvalidConfig
+
+data Config (proxy :: CfgTag)
     = Config
     { alphabet :: String
     , separators :: String
@@ -22,7 +27,7 @@ min_alphabet_length = 16
 separator_ratio = 3.5
 guard_ratio = 12
 
-default_settings :: Config
+default_settings :: Config ValidConfig
 default_settings = Config
     { alphabet = drop len_guards alpha''
     , separators = sep'
@@ -38,7 +43,7 @@ default_settings = Config
     len_guards = length alpha'' `ceildiv` guard_ratio
     ceildiv i j = flip quot j $ i + j - 1
 
-encode :: Config -> [Int] -> String
+encode :: Config ValidConfig -> [Int] -> String
 encode (Config alpha separators min_length salt guards) input
     | long_enough raw = raw
     | long_enough graw = graw
@@ -51,7 +56,7 @@ encode (Config alpha separators min_length salt guards) input
     long_enough = (>= min_length) . length
     guard_choice n = guards !!% (sum (zipWith rem input [100..]) + ord n)
 
-decode :: Config -> String -> [Int]
+decode :: Config ValidConfig -> String -> [Int]
 decode (Config alpha separators min_length salt guards) encoded =
     case str_split (`elem` guards) encoded of
         [_, seed : it, _] -> decode' it $ seed : salt
