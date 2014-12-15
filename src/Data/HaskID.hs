@@ -39,7 +39,7 @@ init_config salt alpha minlen
         | some > 0 = (drop some alf, sep' ++ take some alf)
         | otherwise = (alf, sep')
         where
-        sep' = default_separators `intersect` as
+        sep' = shuffle (default_separators `intersect` as) salt
         alf = shuffle (nub as \\ default_separators) salt
         some = ceiling (fromIntegral (length alf) / separator_ratio) - length sep'
 
