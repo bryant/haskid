@@ -13,9 +13,6 @@ import Data.List (foldl', zipWith4, mapAccumL, (\\), elemIndex, nub, intersect)
 import Data.Maybe (fromJust)
 import Numeric (showIntAtBase, readInt)
 
-alp :: String
-alp = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
-
 data CfgTag = ValidConfig | InvalidConfig
 
 data Config (proxy :: CfgTag)
