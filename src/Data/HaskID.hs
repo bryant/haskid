@@ -58,6 +58,7 @@ ceildiv i j = (i + j - 1) `quot` j
 
 encode :: Config ValidConfig -> [Int] -> String
 encode (Config alpha separators min_length salt guards) input
+    | not $ all (>= 0) input = ""
     | long_enough raw = raw
     | long_enough graw = graw
     | long_enough grawg = grawg
