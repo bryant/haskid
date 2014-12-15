@@ -49,19 +49,9 @@ init_config salt alpha minlen
         where some = length as `ceildiv` guard_ratio
 
 default_settings :: Config ValidConfig
-default_settings = Config
-    { alphabet = drop len_guards alpha''
-    , separators = sep'
-    , min_hash_length = 0
-    , salt = salt'
-    , guards = take len_guards alpha''
-    }
+Right default_settings = init_config "" alpha' 0
     where
-    salt' = ""
     alpha' = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
-    sep' = shuffle "cfhistuCFHISTU" salt'
-    alpha'' = shuffle (alpha' \\ sep') salt'
-    len_guards = length alpha'' `ceildiv` guard_ratio
 
 ceildiv :: Integral n => n -> n -> n
 ceildiv i j = (i + j - 1) `quot` j
