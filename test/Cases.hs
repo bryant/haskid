@@ -5,8 +5,8 @@ import Test.Tasty (TestTree, testGroup)
 import Data.HaskID (encode, default_settings, init_config)
 
 -- test cases from github.com/hashids-python
-test_cases :: TestTree
-test_cases = testGroup "test cases" [
+encode_cases :: TestTree
+encode_cases = testGroup "encoding test cases" [
       testCase "empty_call" $ encode default_settings [] @?= ""
 
     , testCase "default_salt" $ encode default_settings [1, 2, 3] @?= "o2fXhV"
