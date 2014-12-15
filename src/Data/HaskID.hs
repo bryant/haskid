@@ -4,7 +4,7 @@
 module Data.HaskID where
 
 import Data.Char (ord)
-import Data.List (foldl', zipWith4, mapAccumL, (\\), elemIndex)
+import Data.List (foldl', zipWith4, mapAccumL, (\\), elemIndex, nub, intersect)
 import Data.Maybe (fromJust)
 import Numeric (showIntAtBase, readInt)
 
@@ -26,6 +26,27 @@ data Config (proxy :: CfgTag)
 min_alphabet_length = 16
 separator_ratio = 3.5
 guard_ratio = 12
+default_separators = "cfhistuCFHISTU"
+
+init_config :: String -> String -> Int -> Either String (Config ValidConfig)
+init_config salt alpha minlen
+    | length (nub alpha) < 16 = Left "alphabet must be 16+ unique characters."
+    | otherwise = Right $ Config alpha' seps (max 0 minlen) salt guards
+    where
+    (alpha', seps, guards) = uncurry process2 $ process1 alpha
+
+    process1 as
+        | some > 0 = (drop some alf, take some alf ++ sep')
+        | otherwise = (alf, sep')
+        where
+        sep' = default_separators `intersect` as
+        alf = shuffle (nub as \\ default_separators) salt
+        some = ceiling (fromIntegral (length alf) / separator_ratio) - length sep'
+
+    process2 as ss
+        | length as < 3 = (as, drop some ss, take some ss)
+        | otherwise = (drop some as, ss, take some as)
+        where some = length as `ceildiv` guard_ratio
 
 default_settings :: Config ValidConfig
 default_settings = Config
@@ -41,7 +62,9 @@ default_settings = Config
     sep' = shuffle "cfhistuCFHISTU" salt'
     alpha'' = shuffle (alpha' \\ sep') salt'
     len_guards = length alpha'' `ceildiv` guard_ratio
-    ceildiv i j = flip quot j $ i + j - 1
+
+ceildiv :: Integral n => n -> n -> n
+ceildiv i j = (i + j - 1) `quot` j
 
 encode :: Config ValidConfig -> [Int] -> String
 encode (Config alpha separators min_length salt guards) input
