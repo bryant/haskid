@@ -8,6 +8,8 @@ module Data.HaskID
     , default_settings
     ) where
 
+import qualified Data.Array.Unboxed as Array
+
 import Data.Char (ord)
 import Data.List (foldl', mapAccumL, (\\), elemIndex, nub, intersect)
 import Data.Maybe (fromJust)
@@ -119,7 +121,8 @@ enc_step salt alpha val = (alpha', last)
     last = showIntAtBase (length alpha') (alpha' !!) val ""
 
 shuffle :: String -> String -> String
-shuffle xs = foldl' swap xs . mk_swap_points (length xs)
+shuffle xs = Array.elems . foldl' swap xs' . mk_swap_points (length xs)
+    where xs' = Array.listArray (0, length xs - 1) xs
 
 mk_swap_points :: Int -> String -> [(Int, Int)]
 mk_swap_points start [] = []
@@ -130,15 +133,8 @@ mk_swap_points start salt =
     sumsalt = scanl1 (+) $ map snd salts
     compute p i (v, integer) = (i, (integer + v + p) `rem` i)
 
-swap :: [a] -> (Int, Int) -> [a]
-swap xs (i, j)
-    | i == j = xs
-    | j < i = swap xs (j, i)
-    | otherwise = seg xs 0 i ++ [xs !! j] ++ seg xs (i + 1) j ++ [xs !! i]
-                ++ seg xs (j + 1) (length xs)
-
-seg :: [a] -> Int -> Int -> [a]
-seg xs start end = take (end - start) (drop start xs)
+swap :: Array.Array Int Char -> (Int, Int) -> Array.Array Int Char
+swap as (i, j) = as Array.// [(i, as Array.! j), (j, as Array.! i)]
 
 (!!%) :: [a] -> Int -> a
 xs !!% n = xs !! (n `rem` length xs)
