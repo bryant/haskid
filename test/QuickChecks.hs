@@ -1,4 +1,4 @@
-module Test where
+module QuickChecks where
 
 import Test.QuickCheck (quickCheck, forAll, listOf, arbitrary, Positive(..))
 import Data.HaskID (encode, default_settings, decode)
