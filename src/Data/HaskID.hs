@@ -1,7 +1,12 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
 
-module Data.HaskID where
+module Data.HaskID
+    ( encode
+    , decode
+    , init_config
+    , default_settings
+    ) where
 
 import Data.Char (ord)
 import Data.List (foldl', zipWith4, mapAccumL, (\\), elemIndex, nub, intersect)
