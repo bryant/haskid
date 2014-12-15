@@ -101,7 +101,7 @@ shuffle_pad alpha xs min_length
     | otherwise = shuffle_pad alpha' xs' min_length
     where
     alpha' = shuffle alpha alpha
-    xs' = take d alpha' ++ xs ++ drop d alpha' where d = length alpha `quot` 2
+    xs' = drop d alpha' ++ xs ++ take d alpha' where d = length alpha `quot` 2
     exlen2 = (length xs - min_length) `quot` 2
 
 encode_raw :: [Int] -> String -> String -> String -> (String, String)
