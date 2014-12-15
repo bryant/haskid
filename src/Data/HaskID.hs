@@ -36,7 +36,7 @@ init_config salt alpha minlen
     (alpha', seps, guards) = uncurry process2 $ process1 alpha
 
     process1 as
-        | some > 0 = (drop some alf, take some alf ++ sep')
+        | some > 0 = (drop some alf, sep' ++ take some alf)
         | otherwise = (alf, sep')
         where
         sep' = default_separators `intersect` as
