@@ -82,7 +82,8 @@ decode (Config alpha separators min_length salt guards) encoded =
         [_, seed : it] -> decode' it $ seed : salt
         [seed : it] -> decode' it $ seed : salt
         _ -> []
-    where decode' it s = map_accum (dec_step s) alpha $ str_split (`elem` separators) it
+    where decode' it s = snd $ mapAccumL (dec_step s) alpha $
+                                str_split (`elem` separators) it
 
 dec_step :: String -> String -> String -> (String, Int)
 dec_step salt alpha radixed = (alpha', int)
@@ -144,9 +145,6 @@ seg xs start end = take (end - start) (drop start xs)
 
 (!!%) :: [a] -> Int -> a
 xs !!% n = xs !! (n `rem` length xs)
-
-map_accum :: (a -> b -> (a, c)) -> a -> [b] -> [c]
-map_accum f accum = snd . mapAccumL f accum
 
 interleave_with :: [[a]] -> [a] -> [a]
 interleave_with chunks seps = concat (zipWith (++) chunks seps')
