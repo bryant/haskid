@@ -120,24 +120,26 @@ enc_step salt alpha val = (alpha', last)
     alpha' = shuffle alpha alpha_salt
     last = showIntAtBase (length alpha') (alpha' !!) val ""
 
-type CharArray s = (STUArray s) Int Word8
+type UCharArray = UArray Int Word8
 
-shuffle_with :: ByteString -> ByteString -> ByteString
-shuffle_with input salt = BStr.pack $ runST $ do
-    input' <- newListArray (0, last) $ BStr.unpack input :: ST s (CharArray s)
-    loop input' last (fromIntegral $ unsafeIndex salt 0) 0 >>= getElems
+shuffle_with :: UCharArray -> UCharArray -> UCharArray
+shuffle_with input salt = runST $
+    thaw input >>= loop (len input - 1) (fromIntegral $ salt ! 0) 0 >>= freeze
     where
-    loop arr !ind !summ !grainpos = if ind < 1 then return arr else do
-        k <- unsafeRead arr ind
-        unsafeRead arr alt >>= unsafeWrite arr ind >> unsafeWrite arr alt k
-        loop arr (ind - 1) (summ + grain') grainpos'
-        where
-        grain = fromIntegral $ unsafeIndex salt grainpos
-        grain' = fromIntegral $ unsafeIndex salt grainpos'
-        grainpos' = (grainpos + 1) `rem` BStr.length salt
-        alt = (summ + grainpos + grain) `rem` ind
+    len = snd . bounds
 
-    last = BStr.length input - 1
+    loop :: Int -> Int -> Int -> (STUArray s) Int Word8
+         -> ST s ((STUArray s) Int Word8)
+    loop !ind !summ !grainpos arr = if ind < 1 then return arr else swap
+        where
+        swap = do
+            k <- unsafeRead arr ind
+            unsafeRead arr alt >>= unsafeWrite arr ind >> unsafeWrite arr alt k
+            loop (ind - 1) (summ + grain') grainpos' arr
+        grainpos' = (grainpos + 1) `rem` len salt
+        grain' = fromIntegral $ salt ! grainpos'
+        grain = fromIntegral $ salt ! grainpos
+        alt = (summ + grainpos + grain) `rem` ind
 
 shuffle :: String -> String -> String
 shuffle xs = Array.elems . foldl' swap xs' . mk_swap_points (length xs)
