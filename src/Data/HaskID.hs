@@ -9,7 +9,7 @@ module Data.HaskID
     ) where
 
 import Data.Char (ord)
-import Data.List (foldl', zipWith4, mapAccumL, (\\), elemIndex, nub, intersect)
+import Data.List (foldl', mapAccumL, (\\), elemIndex, nub, intersect)
 import Data.Maybe (fromJust)
 import Numeric (showIntAtBase, readInt)
 
