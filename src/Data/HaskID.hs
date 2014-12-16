@@ -120,6 +120,25 @@ enc_step salt alpha val = (alpha', last)
     alpha' = shuffle alpha alpha_salt
     last = showIntAtBase (length alpha') (alpha' !!) val ""
 
+type CharArray s = (STUArray s) Int Word8
+
+shuffle_with :: ByteString -> ByteString -> ByteString
+shuffle_with input salt = BStr.pack $ runST $ do
+    input' <- newListArray (0, last) $ BStr.unpack input :: ST s (CharArray s)
+    loop input' last (fromIntegral $ unsafeIndex salt 0) 0 >>= getElems
+    where
+    loop arr !ind !summ !grainpos = if ind < 1 then return arr else do
+        k <- unsafeRead arr ind
+        unsafeRead arr alt >>= unsafeWrite arr ind >> unsafeWrite arr alt k
+        loop arr (ind - 1) (summ + grain') grainpos'
+        where
+        grain = fromIntegral $ unsafeIndex salt grainpos
+        grain' = fromIntegral $ unsafeIndex salt grainpos'
+        grainpos' = (grainpos + 1) `rem` BStr.length salt
+        alt = (summ + grainpos + grain) `rem` ind
+
+    last = BStr.length input - 1
+
 shuffle :: String -> String -> String
 shuffle xs = Array.elems . foldl' swap xs' . mk_swap_points (length xs)
     where xs' = Array.listArray (0, length xs - 1) xs
