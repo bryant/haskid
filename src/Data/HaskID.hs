@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
 
@@ -9,10 +10,18 @@ module Data.HaskID
     ) where
 
 import qualified Data.Array.Unboxed as Array
+import qualified Data.ByteString as B
 
+import Control.Monad.ST (ST, runST)
+import Data.Array.Base (unsafeRead, unsafeWrite)
+import Data.Array.Unboxed (UArray, bounds)
+import Data.Array.ST (thaw, freeze, STUArray)
+import Data.ByteString (ByteString)
+import Data.ByteString.Unsafe (unsafeIndex, unsafeHead)
 import Data.Char (ord)
 import Data.List (foldl', mapAccumL, (\\), elemIndex, nub, intersect)
 import Data.Maybe (fromJust)
+import Data.Word (Word8)
 import Numeric (showIntAtBase, readInt)
 
 data CfgTag = ValidConfig | InvalidConfig
@@ -120,14 +129,11 @@ enc_step salt alpha val = (alpha', last)
     alpha' = shuffle alpha alpha_salt
     last = showIntAtBase (length alpha') (alpha' !!) val ""
 
-type UCharArray = UArray Int Word8
-
-shuffle_with :: UCharArray -> UCharArray -> UCharArray
-shuffle_with input salt = runST $
-    thaw input >>= loop (len input - 1) (fromIntegral $ salt ! 0) 0 >>= freeze
+salted_shuffle :: UArray Int Word8 -> ByteString -> UArray Int Word8
+salted_shuffle input salt = runST $
+    thaw input >>= loop (arrlen input - 1) (fromIntegral $ unsafeHead salt) 0
+               >>= freeze
     where
-    len = snd . bounds
-
     loop :: Int -> Int -> Int -> (STUArray s) Int Word8
          -> ST s ((STUArray s) Int Word8)
     loop !ind !summ !grainpos arr = if ind < 1 then return arr else swap
@@ -135,11 +141,14 @@ shuffle_with input salt = runST $
         swap = do
             k <- unsafeRead arr ind
             unsafeRead arr alt >>= unsafeWrite arr ind >> unsafeWrite arr alt k
-            loop (ind - 1) (summ + grain') grainpos' arr
-        grainpos' = (grainpos + 1) `rem` len salt
-        grain' = fromIntegral $ salt ! grainpos'
-        grain = fromIntegral $ salt ! grainpos
+            loop (ind - 1) summ' grainpos' arr
         alt = (summ + grainpos + grain) `rem` ind
+        grain = fromIntegral $ unsafeIndex salt grainpos
+        grainpos' = (grainpos + 1) `rem` B.length salt
+        summ' = (summ + fromIntegral grain')
+            where grain' = unsafeIndex salt grainpos'
+
+arrlen = snd . bounds
 
 shuffle :: String -> String -> String
 shuffle xs = Array.elems . foldl' swap xs' . mk_swap_points (length xs)
