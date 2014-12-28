@@ -144,7 +144,7 @@ to_base base f n
     go n accum = go q $ f r : accum where (q, r) = quotRem n base
 
 shuffle :: Vector Int -> Vector Int -> Vector Int
-shuffle input salt = runST $
+shuffle input salt | Vec.length salt == 0 = input | otherwise = runST $
     Vec.thaw input >>= loop (Vec.length input - 1) (salt !~ 0) 0 >>= Vec.freeze
     where
     loop !ind !summ !grainpos vec
