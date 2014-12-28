@@ -5,8 +5,8 @@
 module Data.HaskID
     ( encode
     , decode
-    , init_config
-    , default_settings
+    , init_haskid
+    , opts
     ) where
 
 import qualified Data.Vector.Unboxed as Vec
@@ -19,53 +19,65 @@ import Data.Char (ord, chr)
 import Data.List (foldl', mapAccumL, (\\), elemIndex, nub, intersect)
 import Data.Maybe (fromJust)
 
-data CfgTag = ValidConfig | InvalidConfig
-
-data Config (proxy :: CfgTag)
-    = Config
-    { alphabet :: Vector Int
-    , separators :: Vector Int
-    , min_hash_length :: Int
-    , salt :: Vector Int
-    , guards :: Vector Int
+data HaskID
+    = HaskID
+    { h_alphabet :: Vector Int
+    , h_separators :: Vector Int
+    , h_min_hash_length :: Int
+    , h_salt :: Vector Int
+    , h_guards :: Vector Int
     }
     deriving Show
 
-min_alphabet_length = 16 :: Int
-separator_ratio = 3.5 :: Double
-guard_ratio = 12 :: Double
-default_separators = map ord "cfhistuCFHISTU"
+data HashOptions = HashOptions
+    { opt_salt :: String
+    , opt_alphabet :: String
+    , opt_separators :: String
+    , opt_min_length :: Int
+    , opt_min_alpha_length :: Int
+    , opt_separator_ratio :: Double
+    , opt_guard_ratio :: Double
+    }
+    deriving Show
 
-init_config :: String -> String -> Int -> Either String (Config ValidConfig)
-init_config salt alpha minlen
-    | length (nub alpha) < 16 = Left "alphabet must be 16+ unique characters."
-    | otherwise = Right $ Config as ss (max 0 minlen) salt' gs
+-- | Default Hashid options.
+opts :: HashOptions
+opts = HashOptions
+    { opt_salt = ""
+    , opt_alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234\
+                     \567890"
+    , opt_separators = "cfhistuCFHISTU"
+    , opt_min_length = 0
+    , opt_min_alpha_length = 16
+    , opt_separator_ratio = 3.5
+    , opt_guard_ratio = 12
+    }
+
+init_haskid :: HashOptions -> Either String HaskID
+init_haskid (HashOptions salt alpha sep minlen minalphalen sepratio gratio)
+    | length (nub alpha) < minalphalen = Left "alphabet must be 16+ unique characters."
+    | otherwise = Right $ HaskID avec sepvec (max 0 minlen) saltvec gvec
     where
-    (as, ss, gs) = uncurry process2 . process1 $ map ord alpha
-    salt' = Vec.fromList $ map ord salt
+    (avec, sepvec, gvec) = uncurry process2 . process1 $ map ord alpha
+    saltvec = Vec.fromList $ map ord salt
 
     process1 as
         | some > 0 = (Vec.drop some alf, sep' Vec.++ Vec.take some alf)
         | otherwise = (alf, sep')
         where
-        sep' = shuffle (Vec.fromList $ default_separators `intersect` as) salt'
-        alf = shuffle (Vec.fromList $ nub as \\ default_separators) salt'
-        some = Vec.length alf `ceildiv` separator_ratio - Vec.length sep'
+        sep' = shuffle (Vec.fromList $ map ord sep `intersect` as) saltvec
+        alf = shuffle (Vec.fromList $ nub as \\ map ord sep) saltvec
+        some = Vec.length alf `ceildiv` sepratio - Vec.length sep'
 
     process2 as ss
         | Vec.length as < 3 = (as, Vec.drop some ss, Vec.take some ss)
         | otherwise = (Vec.drop some as, ss, Vec.take some as)
-        where some = Vec.length as `ceildiv` guard_ratio
+        where some = Vec.length as `ceildiv` gratio
 
     ceildiv a b = ceiling $ fromIntegral a / b
 
-default_settings :: Config ValidConfig
-Right default_settings = init_config "" alpha' 0
-    where
-    alpha' = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
-
-encode :: Config ValidConfig -> [Int] -> String
-encode (Config alpha separators min_length salt guards) input
+encode :: HaskID -> [Int] -> String
+encode (HaskID alpha separators min_length salt guards) input
     | not $ all (>= 0) input = ""
     | long_enough raw = map chr raw
     | long_enough graw = map chr graw
@@ -78,8 +90,8 @@ encode (Config alpha separators min_length salt guards) input
     long_enough = (>= min_length) . length
     guard_choice n = guards !~% (sum (zipWith rem input [100..]) + n)
 
-decode :: Config ValidConfig -> String -> [Int]
-decode (Config alpha separators min_length salt guards) encoded =
+decode :: HaskID -> String -> [Int]
+decode (HaskID alpha separators min_length salt guards) encoded =
     case str_split (`Vec.elem` guards) $ map ord encoded of
         [_, seed : it, _] -> decode' it $ Vec.cons seed salt
         [_, seed : it] -> decode' it $ Vec.cons seed salt
