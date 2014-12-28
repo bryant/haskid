@@ -2,16 +2,16 @@ module Cases where
 
 import Test.Tasty.HUnit ((@?=), testCase)
 import Test.Tasty (TestTree, testGroup)
-import Data.HaskID (encode, default_settings, init_config)
+import Data.HaskID (encode, haskid, init_haskid, opts, HashOptions(..))
 
 -- test cases from github.com/hashids-python
 encode_cases :: TestTree
 encode_cases = testGroup "encoding test cases" [
-      testCase "empty_call" $ encode default_settings [] @?= ""
+      testCase "empty_call" $ encode haskid [] @?= ""
 
-    , testCase "default_salt" $ encode default_settings [1, 2, 3] @?= "o2fXhV"
+    , testCase "default_salt" $ encode haskid [1, 2, 3] @?= "o2fXhV"
 
-    , testGroup "single_number" $ let h = default_settings
+    , testGroup "single_number" $ let h = haskid
     in zipWith (testCase . show) [0..] [
           encode h [12345] @?= "j0gW"
         , encode h [1] @?= "jR"
@@ -20,7 +20,7 @@ encode_cases = testGroup "encoding test cases" [
         , encode h [9999] @?= "w0rR"
         ]
 
-    , testGroup "multiple_numbers" $ let h = default_settings
+    , testGroup "multiple_numbers" $ let h = haskid
     in zipWith (testCase . show) [0..] [
           encode h [683, 94108, 123, 5] @?= "vJvi7On9cXGtD"
         , encode h [1, 2, 3] @?= "o2fXhV"
@@ -29,7 +29,7 @@ encode_cases = testGroup "encoding test cases" [
         ]
 
     , testGroup "salt" $ let
-        Right h = init_config "Arbitrary string" def_alpha 0
+        Right h = init_haskid opts { opt_salt = "Arbitrary string" }
     in zipWith (testCase . show) [0..] [
           encode h [683, 94108, 123, 5] @?= "QWyf8yboH7KT2"
         , encode h [1, 2, 3] @?= "neHrCa"
@@ -38,9 +38,9 @@ encode_cases = testGroup "encoding test cases" [
         ]
 
     , testGroup "alphabet" $ let
-        alpha' = "!\"#%&\',-/0123456789:;<=>ABCDEFGHIJKLMNOPQRSTUVWXYZ_`abcdefg\
-                 \hijklmnopqrstuvwxyz~"
-        Right h = init_config "" alpha' 0
+        Right h = init_haskid opts { opt_alphabet =
+            "!\"#%&\',-/0123456789:;<=>ABCDEFGHIJKLMNOPQRSTUVWXYZ_`abcdefghijkl\
+            \mnopqrstuvwxyz~" }
     in zipWith (testCase . show) [0..] [
           encode h [2839, 12, 32, 5] @?= "_nJUNTVU3"
         , encode h [1, 2, 3] @?= "7xfYh2"
@@ -48,7 +48,8 @@ encode_cases = testGroup "encoding test cases" [
         , encode h [99, 25] @?= "AYyIB"
         ]
 
-    , testGroup "min_length" $ let Right h = init_config "" def_alpha 25
+    , testGroup "min_length" $ let
+        Right h = init_haskid opts { opt_min_length = 25 }
     in zipWith (testCase . show) [0..] [
           encode h [7452, 2967, 21401] @?= "pO3K69b86jzc6krI416enr2B5"
         , encode h [1, 2, 3] @?= "gyOwl4B97bo2fXhVaDR0Znjrq"
@@ -57,7 +58,11 @@ encode_cases = testGroup "encoding test cases" [
         ]
 
     , testGroup "all_parameters" $ let
-        Right h = init_config "arbitrary salt" "abcdefghijklmnopqrstuvwxyz" 16
+        Right h = init_haskid opts
+            { opt_salt = "arbitrary salt"
+            , opt_alphabet = "abcdefghijklmnopqrstuvwxyz"
+            , opt_min_length = 16
+            }
     in zipWith (testCase . show) [0..] [
           encode h [7452, 2967, 21401] @?= "wygqxeunkatjgkrw"
         , encode h [1, 2, 3] @?= "pnovxlaxuriowydb"
@@ -67,7 +72,7 @@ encode_cases = testGroup "encoding test cases" [
 
     , testGroup "alphabet_without_standard_separators" $ let
         alpha' = "abdegjklmnopqrvwxyzABDEGJKLMNOPQRVWXYZ1234567890"
-        Right h = init_config "" alpha' 0
+        Right h = init_haskid opts { opt_alphabet = alpha', opt_min_length = 0 }
     in zipWith (testCase . show) [0..] [
           encode h [7452, 2967, 21401] @?= "X50Yg6VPoAO4"
         , encode h [1, 2, 3] @?= "GAbDdR"
@@ -77,7 +82,7 @@ encode_cases = testGroup "encoding test cases" [
 
     , testGroup "alphabet_with_two_standard_separators" $ let
         alpha' = "abdegjklmnopqrvwxyzABDEGJKLMNOPQRVWXYZ1234567890uC"
-        Right h = init_config "" alpha' 0
+        Right h = init_haskid opts { opt_alphabet = alpha' }
     in zipWith (testCase . show) [0..] [
           encode h [7452, 2967, 21401] @?= "GJNNmKYzbPBw"
         , encode h [1, 2, 3] @?= "DQCXa4"
@@ -85,7 +90,7 @@ encode_cases = testGroup "encoding test cases" [
         , encode h [99, 25] @?= "373az"
         ]
 
-    , testCase "negative_call" $ encode default_settings [1, -2, 3] @?= ""
+    , testCase "negative_call" $ encode haskid [1, -2, 3] @?= ""
     ]
 
 def_alpha :: String
