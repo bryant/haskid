@@ -14,12 +14,10 @@ import qualified Data.Vector.Unboxed as Vec
 import Data.Vector.Unboxed (Vector)
 import Data.Vector.Unboxed.Mutable (swap)
 
-import Control.Monad.ST (ST, runST)
+import Control.Monad.ST (runST)
 import Data.Char (ord, chr)
 import Data.List (foldl', mapAccumL, (\\), elemIndex, nub, intersect)
 import Data.Maybe (fromJust)
-import Data.Word (Word8)
-import Numeric (showIntAtBase, readInt)
 
 data CfgTag = ValidConfig | InvalidConfig
 
