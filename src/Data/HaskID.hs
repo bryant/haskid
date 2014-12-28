@@ -9,15 +9,12 @@ module Data.HaskID
     , default_settings
     ) where
 
-import qualified Data.ByteString as B
 import qualified Data.Vector.Unboxed as Vec
 
 import Data.Vector.Unboxed (Vector)
 import Data.Vector.Unboxed.Mutable (swap)
 
 import Control.Monad.ST (ST, runST)
-import Data.ByteString (ByteString)
-import Data.ByteString.Unsafe (unsafeIndex, unsafeHead)
 import Data.Char (ord, chr)
 import Data.List (foldl', mapAccumL, (\\), elemIndex, nub, intersect)
 import Data.Maybe (fromJust)
