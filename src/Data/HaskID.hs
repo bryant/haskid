@@ -7,6 +7,7 @@ module Data.HaskID
     , decode
     , init_haskid
     , opts
+    , haskid
     ) where
 
 import qualified Data.Vector.Unboxed as Vec
@@ -52,6 +53,9 @@ opts = HashOptions
     , opt_separator_ratio = 3.5
     , opt_guard_ratio = 12
     }
+
+haskid :: HaskID
+Right haskid = init_haskid opts
 
 init_haskid :: HashOptions -> Either String HaskID
 init_haskid (HashOptions salt alpha sep minlen minalphalen sepratio gratio)
