@@ -4,7 +4,7 @@
 
 module Data.HaskID
     ( encode
-    -- , decode
+    , decode
     , init_config
     , default_settings
     ) where
@@ -80,25 +80,31 @@ encode (Config alpha separators min_length salt guards) input
     long_enough = (>= min_length) . length
     guard_choice n = guards !~% (sum (zipWith rem input [100..]) + n)
 
-{-
 decode :: Config ValidConfig -> String -> [Int]
 decode (Config alpha separators min_length salt guards) encoded =
-    case str_split (`elem` guards) encoded of
-        [_, seed : it, _] -> decode' it $ seed : salt
-        [_, seed : it] -> decode' it $ seed : salt
-        [seed : it] -> decode' it $ seed : salt
+    case str_split (`Vec.elem` guards) $ map ord encoded of
+        [_, seed : it, _] -> decode' it $ Vec.cons seed salt
+        [_, seed : it] -> decode' it $ Vec.cons seed salt
+        [seed : it] -> decode' it $ Vec.cons seed salt
         _ -> []
     where decode' it s = snd $ mapAccumL (dec_step s) alpha $
-                                str_split (`elem` separators) it
+                                str_split (`Vec.elem` separators) it
 
-dec_step :: String -> String -> String -> (String, Int)
+dec_step :: Vector Int -> Vector Int -> [Int] -> (Vector Int, Int)
 dec_step salt alpha radixed = (alpha', int)
     where
-    alpha_salt = take (length alpha) (salt ++ alpha)
+    alpha_salt = Vec.take (Vec.length alpha) (salt Vec.++ alpha)
     alpha' = shuffle alpha alpha_salt
-    int = fst . head $ readInt (length alpha') (`elem` alpha') index_in radixed
-    index_in = fromJust . (`elemIndex` alpha')
--}
+    int = read_base (Vec.length alpha') index_in radixed
+    index_in = fromJust . (`Vec.elemIndex` alpha')
+
+read_base :: Integral a => a -> (b -> a) -> [b] -> a
+read_base base f (x:xs)
+    | base < 1 = error "base < 1"
+    | otherwise = go xs $ f x
+    where
+    go [] n = n
+    go (x:xs) n = go xs $ f x + n * base
 
 shuffle_pad :: Vector Int -> [Int] -> Int -> [Int]
 shuffle_pad alpha xs min_length
