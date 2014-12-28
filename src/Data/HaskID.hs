@@ -8,6 +8,8 @@ module Data.HaskID
     , init_haskid
     , opts
     , haskid
+    , HaskID
+    , HashOptions (opt_salt, opt_alphabet, opt_min_length)
     ) where
 
 import qualified Data.Vector.Unboxed as Vec
