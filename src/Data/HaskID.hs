@@ -140,8 +140,7 @@ to_base :: Integral a => a -> (a -> b) -> a -> [b]
 to_base base f n
     | base <= 1 = error "base <= 1"
     | n < 0 = error "negative"
-    | n == 0 = [f 0]
-    | otherwise = go n []
+    | otherwise = go (n `quot` base) [f $ n `rem` base]
     where
     go 0 accum = accum
     go n accum = go q $ f r : accum where (q, r) = quotRem n base
