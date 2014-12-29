@@ -7,7 +7,7 @@ license-file: LICENSE
 author: bryant
 maintainer: bryant@defrag.in
 category: Data, Digest
-build-type: Simple
+build-type: Custom
 cabal-version: >=1.10
 
 library
@@ -16,6 +16,23 @@ library
     hs-source-dirs: src
     exposed-modules: Data.HaskID
     ghc-options: -O3 -Wall
+
+flag bench
+    description: Build the benchmarking suite.
+    default: False
+
+executable benchmarks
+    if flag(bench)
+        buildable: True
+    else
+        buildable: False
+    build-depends: base, haskid, criterion
+    hs-source-dirs: bench
+    main-is: Main.hs
+
+    default-language:    Haskell2010
+    ghc-options: -O3 -Wall
+    ld-options: bench/hashidsffi.o bench/hashidsxx/hashids.o -lstdc++
 
 test-suite haskid-tests
     type: exitcode-stdio-1.0
