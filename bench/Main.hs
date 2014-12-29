@@ -3,10 +3,9 @@ module Main where
 import Data.Word (Word64)
 import Data.List (foldl')
 
-import Data.HaskID (opts, encode, decode, HashOptions(..), init_haskid, haskid)
+import Data.HaskID (opts, encode, decode, HashOptions(..), init_haskid)
 
-import Criterion.Main (defaultMain, bgroup, bench, whnf, nfIO)
-import Control.Monad (replicateM)
+import Criterion.Main (defaultMain, bgroup, bench, nfIO)
 
 foreign import ccall "round_trip_bench"
     round_trip_bench :: Word64 -> IO Word64
@@ -17,6 +16,7 @@ foreign import ccall "control"
 nums :: [Int]
 nums = [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9]
 
+main :: IO ()
 main = defaultMain
     [ bgroup (show loops)
         [ bench "haskid" . nfIO . foldl' (>>=) (return nums) $

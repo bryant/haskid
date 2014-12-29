@@ -17,7 +17,7 @@ import Data.Vector.Unboxed.Mutable (swap)
 
 import Control.Monad.ST (runST)
 import Data.Char (ord, chr)
-import Data.List (foldl', mapAccumL, (\\), elemIndex, nub, intersect)
+import Data.List (mapAccumL, (\\), nub, intersect)
 import Data.Maybe (fromJust)
 
 data HaskID
@@ -95,7 +95,7 @@ encode (HaskID alpha separators min_length salt guards) input
     guard_choice n = guards !~% (sum (zipWith rem input [100..]) + n)
 
 decode :: HaskID -> String -> [Int]
-decode (HaskID alpha separators min_length salt guards) encoded =
+decode (HaskID alpha separators _ salt guards) encoded =
     case str_split (`Vec.elem` guards) $ map ord encoded of
         [_, seed : it, _] -> decode' it $ Vec.cons seed salt
         [_, seed : it] -> decode' it $ Vec.cons seed salt
@@ -119,7 +119,7 @@ read_base base f (x:xs)
     | otherwise = go xs $ f x
     where
     go [] n = n
-    go (x:xs) n = go xs $ f x + n * base
+    go (y:ys) n = go ys $ f y + n * base
 
 shuffle_pad :: Vector Int -> [Int] -> Int -> [Int]
 shuffle_pad alpha xs min_length
@@ -146,10 +146,10 @@ mk_seps seps input chunks = zipWith3 mk' [0..] input $ map head chunks
     where mk' idx val c = seps !~% (val `rem` (c + idx))
 
 enc_step :: Vector Int -> Vector Int -> Int -> (Vector Int, [Int])
-enc_step salt alpha val = (alpha', last)
+enc_step salt alpha val = (alpha', encoded)
     where
     alpha' = shuffle alpha $ Vec.take (Vec.length alpha) (salt Vec.++ alpha)
-    last = to_base (Vec.length alpha) (alpha' !~) val
+    encoded = to_base (Vec.length alpha) (alpha' !~) val
 
 to_base :: Integral a => a -> (a -> b) -> a -> [b]
 to_base base f n
@@ -158,7 +158,7 @@ to_base base f n
     | otherwise = go (n `quot` base) [f $ n `rem` base]
     where
     go 0 accum = accum
-    go n accum = go q $ f r : accum where (q, r) = quotRem n base
+    go q accum = go q' $ f r' : accum where (q', r') = quotRem q base
 
 shuffle :: Vector Int -> Vector Int -> Vector Int
 shuffle input salt | Vec.length salt == 0 = input | otherwise = runST $
