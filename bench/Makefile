@@ -1,4 +1,4 @@
-ffi: ffi.hs hashidsffi.o hashidsxx/hashids.o
+Main: Main.hs hashidsffi.o hashidsxx/hashids.o
 	ghc -O3 -fforce-recomp -i../src $^ -lstdc++
 
 hashidsffi.o: hashidsffi.cpp
