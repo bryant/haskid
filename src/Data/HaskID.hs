@@ -113,6 +113,7 @@ dec_step salt alpha radixed = (alpha', int)
     index_in = fromJust . (`Vec.elemIndex` alpha')
 
 read_base :: Integral a => a -> (b -> a) -> [b] -> a
+read_base _ _ [] = error "empty numeral"
 read_base base f (x:xs)
     | base < 1 = error "base < 1"
     | otherwise = go xs $ f x
