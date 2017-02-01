@@ -38,8 +38,8 @@ $ cabal build
 $ ./dist/build/benchmarks/benchmarks --output benchmarks.html
 ```
 
-Existing benchmarks results are also available under
-[benchmarks.html](https://raw.githubusercontent.com/bryant/haskid/master/bench/benchmarks.html),
+Existing benchmarks results are also available
+[here](https://bryant.github.io/haskid/benchmarks.html),
 which were run under a twelve-core i7-3930K:
 
 ```bash
